@@ -1,0 +1,44 @@
+// A single cell on the Tetris board
+
+class Block {
+    field int x, y;   // top-left pixel position
+    field int size;    // cell size in pixels
+
+    constructor Block new(int Ax, int Ay, int Asize) {
+        let x = Ax;
+        let y = Ay;
+        let size = Asize;
+        return this;
+    }
+
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+
+    method void draw() {
+        // Draw beveled square
+        do Screen.setColor(true);
+        do Screen.drawRectangle(x, y, (x + size) - 1, (y + size) - 1);
+        do Screen.setColor(false);
+        do Screen.drawRectangle(x + 2, y + 2, (x + size) - 3, (y + size) - 3);
+        do Screen.setColor(true);
+        do Screen.drawRectangle(x + 3, y + 3, (x + size) - 4, (y + size) - 4);
+        return;
+    }
+
+    method void erase() {
+        do Screen.setColor(false);
+        do Screen.drawRectangle(x, y, (x + size) - 1, (y + size) - 1);
+        return;
+    }
+
+    method void moveXY(int incX, int incY) {
+        let x = x + incX;
+        let y = y + incY;
+        return;
+    }
+
+    method int getX() { return x; }
+    method int getY() { return y; }
+}

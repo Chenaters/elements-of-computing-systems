@@ -1,0 +1,328 @@
+// Tetris board containing pieces
+
+class Board {
+    field int boardX, boardY;  // top-left pixel of the board
+    field int cellSize;        // pixels per cell
+    field int cols, rows;      // grid dimensions
+    field Shape currentShape;  // the active falling piece
+    field Array grid;          // cols*rows array: 0=empty, 1=occupied
+    field boolean gameOver;    // true when a new piece overlaps placed blocks
+    field int score;            // player score
+    field int rng;              // randomness
+
+    constructor Board new() {
+        var int i;
+        let cellSize = 12;
+        let cols = 10;
+        let rows = 20;
+        let boardX = 196;      // horizontally centered: (512 - 10*12) / 2
+        let boardY = 8;        // vertically centered:  (256 - 20*12) / 2
+        let rng = 12345;
+
+        // Initialize empty grid
+        let grid = Array.new(cols * rows);
+        let i = 0;
+        while (i < (cols * rows)) {
+            let grid[i] = 0;
+            let i = i + 1;
+        }
+
+        let gameOver = false;
+        let score = 0;
+
+        do drawBorder();
+        do drawScore();
+        do spawnRandomBlock();
+
+        return this;
+    }
+
+    method void drawBorder() {
+        // Outer boarders
+        var int x2, y2, i;
+        let x2 = boardX + (cols * cellSize);
+        let y2 = boardY + (rows * cellSize);
+
+        do Screen.setColor(true);
+        // Top
+        do Screen.drawLine(boardX - 2, boardY - 2, x2 + 1, boardY - 2);
+        do Screen.drawLine(boardX - 1, boardY - 1, x2,     boardY - 1);
+        // Bottom
+        do Screen.drawLine(boardX - 2, y2 + 1, x2 + 1, y2 + 1);
+        do Screen.drawLine(boardX - 1, y2,     x2,     y2);
+        // Left
+        do Screen.drawLine(boardX - 2, boardY - 2, boardX - 2, y2 + 1);
+        do Screen.drawLine(boardX - 1, boardY - 1, boardX - 1, y2);
+        // Right
+        do Screen.drawLine(x2 + 1, boardY - 2, x2 + 1, y2 + 1);
+        do Screen.drawLine(x2,     boardY - 1, x2,     y2);
+
+        // Draw grid lines
+        do drawGrid();
+
+        return;
+    }
+
+    method void drawGrid() {
+        // Grid lines on board
+        var int x2, y2, i, pos;
+        let x2 = boardX + (cols * cellSize);
+        let y2 = boardY + (rows * cellSize);
+
+        do Screen.setColor(true);
+        // Vertical grid lines
+        let i = 1;
+        while (i < cols) {
+            let pos = boardX + (i * cellSize);
+            do Screen.drawLine(pos, boardY, pos, y2 - 1);
+            let i = i + 1;
+        }
+        // Horizontal grid lines
+        let i = 1;
+        while (i < rows) {
+            let pos = boardY + (i * cellSize);
+            do Screen.drawLine(boardX, pos, x2 - 1, pos);
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method void drawScore() {
+        // Erase score area
+        do Screen.setColor(false);
+        do Screen.drawRectangle(336, 44, 450, 54);
+        // Rewrite score
+        do Screen.setColor(true);
+        do Output.moveCursor(2, 42);
+        do Output.printString("Score: ");
+        do Output.printInt(score);
+        return;
+    }
+
+    method int nextRandom() {
+        var int rem;
+        let rng = (rng * 123) + 321;
+        if (rng < 0) { let rng = -rng; }
+        let rem = rng - ((rng / 7) * 7);
+        return rem + 1;
+    }
+
+    method void spawnRandomBlock() {
+        var int startX, startY, randShape;
+        let startX = boardX + (4 * cellSize);
+        let startY = boardY;
+        let randShape = nextRandom();
+        let currentShape = Shape.new(randShape, startX, startY, cellSize);
+        do currentShape.draw();
+        return;
+    }
+
+    method boolean isGameOver() { return gameOver; }
+
+    method boolean isValidMove(int dx, int dy) {
+        // Check for valid movement
+        var int maxX, maxY;
+        var Block b;
+        var int i, nx, ny, gc, gr;
+        let maxX = boardX + (cols * cellSize);
+        let maxY = boardY + (rows * cellSize);
+
+        // First check wall bounds
+        if (~(currentShape.canMove(dx, dy, boardX, boardY, maxX, maxY))) {
+            return false;
+        }
+
+        // Then check grid collisions
+        let i = 0;
+        while (i < currentShape.getNumBlocks()) {
+            let b = currentShape.getBlock(i);
+            let nx = b.getX() + (dx * cellSize);
+            let ny = b.getY() + (dy * cellSize);
+            let gc = (nx - boardX) / cellSize;
+            let gr = (ny - boardY) / cellSize;
+            if (grid[(gr * cols) + gc] = 1) {
+                return false;
+            }
+            let i = i + 1;
+        }
+        return true;
+    }
+
+    method void moveCurrentShape(int dx, int dy) {
+        if (isValidMove(dx, dy)) {
+            do currentShape.erase();
+            do drawGrid();
+            do currentShape.move(dx, dy);
+            do currentShape.draw();
+        }
+        return;
+    }
+
+    method void hardDrop() {
+        do currentShape.erase();
+        while (isValidMove(0, 1)) {
+            do currentShape.move(0, 1);
+        }
+        do currentShape.draw();
+        do drawGrid();
+        do lockAndSpawn();
+        return;
+    }
+
+    method void dropOrLock() {
+        if (isValidMove(0, 1)) {
+            do currentShape.erase();
+            do drawGrid();
+            do currentShape.move(0, 1);
+            do currentShape.draw();
+        } else {
+            do lockAndSpawn();
+        }
+        return;
+    }
+
+    method void lockAndSpawn() {
+        // Lock current shape and spawn new block
+        var Block b;
+        var int i, gc, gr;
+
+        // Mark each block's cell as occupied in the grid
+        let i = 0;
+        while (i < currentShape.getNumBlocks()) {
+            let b = currentShape.getBlock(i);
+            let gc = (b.getX() - boardX) / cellSize;
+            let gr = (b.getY() - boardY) / cellSize;
+            let grid[(gr * cols) + gc] = 1;
+            let i = i + 1;
+        }
+
+        do currentShape.dispose();
+
+        do clearFullRows();
+
+        do spawnRandomBlock();
+
+        // Check if the new piece overlaps occupied cells => game over
+        if (~(checkSpawnFree())) {
+            let gameOver = true;
+        }
+        return;
+    }
+
+    method boolean checkSpawnFree() {
+        // Checks if new spawned block overlaps
+        var Block b;
+        var int i, gc, gr;
+        let i = 0;
+        while (i < currentShape.getNumBlocks()) {
+            let b = currentShape.getBlock(i);
+            let gc = (b.getX() - boardX) / cellSize;
+            let gr = (b.getY() - boardY) / cellSize;
+            if (grid[(gr * cols) + gc] = 1) {
+                return false;
+            }
+            let i = i + 1;
+        }
+        return true;
+    }
+    method void clearFullRows() {
+        var int r, c, idx;
+        var boolean full;
+        var int linesCleared;
+
+        let linesCleared = 0;
+        let r = rows - 1;
+        while (~(r < 0)) {
+            // Check if row r is full
+            let full = true;
+            let c = 0;
+            while (c < cols) {
+                if (grid[(r * cols) + c] = 0) {
+                    let full = false;
+                }
+                let c = c + 1;
+            }
+
+            if (full) {
+                do removeRow(r);
+                let linesCleared = linesCleared + 1;
+            } else {
+                let r = r - 1;
+            }
+        }
+
+        // Award points: 100 per line
+        let score = 100 * linesCleared + score;
+
+        if (linesCleared > 0) {
+            do drawScore();
+        }
+        return;
+    }
+
+
+    method void removeRow(int r) {
+        // Clears row and shifts above rows down.
+        var int row, c, px, py;
+
+        // Shift grid data from row r-1 down to row r, etc.
+        let row = r;
+        while (row > 0) {
+            let c = 0;
+            while (c < cols) {
+                let grid[(row * cols) + c] = grid[((row - 1) * cols) + c];
+                let c = c + 1;
+            }
+            let row = row - 1;
+        }
+        // Clear top row in grid
+        let c = 0;
+        while (c < cols) {
+            let grid[c] = 0;
+            let c = c + 1;
+        }
+
+        // Redraw the entire board from the grid
+        do redrawGrid();
+        return;
+    }
+
+
+    method void redrawGrid() {
+        // Redraws all blocks that are on board
+        var int r, c, px, py;
+        let r = 0;
+        while (r < rows) {
+            let c = 0;
+            while (c < cols) {
+                let px = boardX + (c * cellSize);
+                let py = boardY + (r * cellSize);
+                if (grid[(r * cols) + c] = 1) {
+                    // Draw a block for display
+                    do Screen.setColor(true);
+                    do Screen.drawRectangle(px, py, (px + cellSize) - 1, (py + cellSize) - 1);
+                    do Screen.setColor(false);
+                    do Screen.drawRectangle(px + 2, py + 2, (px + cellSize) - 3, (py + cellSize) - 3);
+                    do Screen.setColor(true);
+                    do Screen.drawRectangle(px + 3, py + 3, (px + cellSize) - 4, (py + cellSize) - 4);
+                } else {
+                    // Erase cell
+                    do Screen.setColor(false);
+                    do Screen.drawRectangle(px, py, (px + cellSize) - 1, (py + cellSize) - 1);
+                }
+                let c = c + 1;
+            }
+            let r = r + 1;
+        }
+
+        do drawGrid();
+        return;
+    }
+
+    method void dispose() {
+        do currentShape.dispose();
+        do grid.dispose();
+        do Memory.deAlloc(this);
+        return;
+    }
+}

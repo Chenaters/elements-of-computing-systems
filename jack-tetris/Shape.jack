@@ -1,0 +1,144 @@
+// Tetris piece
+
+class Shape {
+    field Array blocks;    
+    field int numBlocks;
+    field int cellSize;
+
+    constructor Shape new(int shapeType, int startX, int startY, int aCellSize) {
+        let cellSize = aCellSize;
+
+        if (shapeType = 1) {
+            // O block
+            let numBlocks = 4;
+            let blocks = Array.new(4);
+            let blocks[0] = Block.new(startX, startY, cellSize);
+            let blocks[1] = Block.new(startX + cellSize, startY, cellSize);
+            let blocks[2] = Block.new(startX, startY + cellSize, cellSize);
+            let blocks[3] = Block.new(startX + cellSize, startY + cellSize, cellSize);
+        }
+        if (shapeType = 2) {
+            // 1 x 2 block
+            let numBlocks = 2;
+            let blocks = Array.new(2);
+            let blocks[0] = Block.new(startX, startY, cellSize);
+            let blocks[1] = Block.new(startX, startY + cellSize, cellSize);
+        }
+        if (shapeType = 3) {
+            // 2 x 1 block
+            let numBlocks = 2;
+            let blocks = Array.new(2);
+            let blocks[0] = Block.new(startX, startY, cellSize);
+            let blocks[1] = Block.new(startX + cellSize, startY, cellSize);
+        }
+        if (shapeType = 4){
+            // 1 x 1
+            let numBlocks = 1;
+            let blocks = Array.new(1);
+            let blocks[0] = Block.new(startX, startY, cellSize);
+        }
+        if (shapeType = 5){
+            // _|
+            let numBlocks = 3;
+            let blocks = Array.new(3);
+            let blocks[0] = Block.new(startX + cellSize, startY, cellSize);
+            let blocks[1] = Block.new(startX, startY + cellSize, cellSize);
+            let blocks[2] = Block.new(startX + cellSize, startY + cellSize, cellSize);
+        }
+        if (shapeType = 6){
+            // big L
+            let numBlocks = 4;
+            let blocks = Array.new(4);
+            let blocks[0] = Block.new(startX, startY, cellSize);
+            let blocks[1] = Block.new(startX, startY + cellSize, cellSize);
+            let blocks[2] = Block.new(startX + cellSize, startY + (cellSize * 2), cellSize);
+            let blocks[3] = Block.new(startX, startY + (cellSize * 2), cellSize);
+        }
+        if (shapeType = 7){
+            // T
+            let numBlocks = 4;
+            let blocks = Array.new(4);
+            let blocks[0] = Block.new(startX, startY + cellSize, cellSize);
+            let blocks[1] = Block.new(startX + cellSize, startY + cellSize, cellSize);
+            let blocks[2] = Block.new(startX + cellSize, startY, cellSize);
+            let blocks[3] = Block.new(startX + (cellSize * 2), startY + cellSize, cellSize);
+        }
+
+        return this;
+    }
+
+    method void draw() {
+        var Block b;
+        var int i;
+        let i = 0;
+        while (i < numBlocks) {
+            let b = blocks[i];
+            do b.draw();
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method void erase() {
+        var Block b;
+        var int i;
+        let i = 0;
+        while (i < numBlocks) {
+            let b = blocks[i];
+            do b.erase();
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method boolean canMove(int dx, int dy, int minX, int minY, int maxX, int maxY) {
+        // For checking moving out of borders
+        var Block b;
+        var int i;
+        var int nx;
+        var int ny;
+        let i = 0;
+        while (i < numBlocks) {
+            let b = blocks[i];
+            let nx = b.getX() + (dx * cellSize);
+            let ny = b.getY() + (dy * cellSize);
+            if (nx < minX) { return false; }
+            if (ny < minY) { return false; }
+            if ((nx + cellSize) > maxX) { return false; }
+            if ((ny + cellSize) > maxY) { return false; }
+            let i = i + 1;
+        }
+        return true;
+    }
+
+    method void move(int dx, int dy) {
+        // Moves all blocks within shape
+        var Block b;
+        var int i;
+        let i = 0;
+        while (i < numBlocks) {
+            let b = blocks[i];
+            do b.moveXY(dx * cellSize, dy * cellSize);
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method int getNumBlocks() { return numBlocks; }
+
+    method Block getBlock(int i) { return blocks[i]; }
+
+    method void dispose() {
+        var Block b;
+        var int i;
+        let i = 0;
+        while (i < numBlocks) {
+            let b = blocks[i];
+            do b.dispose();
+            let i = i + 1;
+        }
+        do blocks.dispose();
+        do Memory.deAlloc(this);
+        return;
+    }
+}

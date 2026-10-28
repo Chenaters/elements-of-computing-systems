@@ -1,0 +1,35 @@
+// Test A: Main program for Simple Coroutine Test
+// Creates and runs a single coroutine through its yield points
+
+class Main {
+  function void main() {
+    var SimpleCounter coro;
+    var int iterations;
+
+    do Output.printString("Test A: Simple Coroutine");
+    do Output.println();
+
+    let coro = SimpleCounter.new(3);
+    let iterations = 0;
+
+    // Manually step through the coroutine
+    // In a real scheduler, this would be automatic
+    do Output.printString("Calling step() iteration 1");
+    do Output.println();
+    do coro.step();  // Should execute first segment and yield
+
+    do Output.printString("Calling step() iteration 2");
+    do Output.println();
+    do coro.step();  // Should execute second segment and yield
+
+    do Output.printString("Calling step() iteration 3");
+    do Output.println();
+    do coro.step();  // Should execute third segment and finish
+
+    do Output.printString("Test A Complete");
+    do Output.println();
+
+    do coro.dispose();
+    return;
+  }
+}

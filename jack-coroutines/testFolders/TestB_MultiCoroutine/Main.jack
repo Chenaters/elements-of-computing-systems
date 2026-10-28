@@ -1,0 +1,48 @@
+// Test B: Main Program for Multiple Coroutines
+// Demonstrates scheduler pattern with two coroutines alternating execution
+
+
+class Main {
+  function void main() {
+    var Producer producer;
+    var Consumer consumer;
+    var int step;
+
+    do Output.printString("Test B: Multiple Coroutines (Producer/Consumer)");
+    do Output.println();
+
+    let producer = Producer.new();
+    let consumer = Consumer.new();
+
+    // Simulate scheduler running multiple rounds
+    // Each step represents one scheduler tick
+    let step = 0;
+    while (step < 6) {
+      do Output.printString("--- Step ");
+      do Output.printInt(step);
+      do Output.printString(" ---");
+      do Output.println();
+
+      // Run producer
+      if (step < 3) {
+        do producer.run();
+      }
+
+      // Run consumer
+      if (step < 6) {
+        do consumer.run(producer);
+      }
+
+      let step = step + 1;
+    }
+
+    do Output.printString("Test B Complete - Processed ");
+    do Output.printInt(consumer.getCount());
+    do Output.printString(" items");
+    do Output.println();
+
+    do producer.dispose();
+    do consumer.dispose();
+    return;
+  }
+}

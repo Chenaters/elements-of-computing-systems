@@ -1,0 +1,69 @@
+class TetrisGame {
+    field Board board;
+    field boolean quit;
+
+    constructor TetrisGame new() {
+        do Screen.clearScreen();
+        let board = Board.new();
+        let quit = false;
+        return this;
+    }
+
+    method void run() {
+        // Game loop that checks keyboard presses
+        var char key;
+        var int timer;
+        var int gravity;
+        var boolean keyHandled;
+
+        let timer = 0;
+        let gravity = 30000;  // ticks between auto-drops
+
+        while (~quit) {
+            // Check for game over
+            if (board.isGameOver()) {
+                do Output.moveCursor(10, 42);
+                do Output.printString("GAME OVER");
+                let quit = true;
+            }
+
+            let key = Keyboard.keyPressed();
+
+            if (~(key = 0)) {
+                if (~keyHandled) {
+                    if (key = 130) { do board.moveCurrentShape(-1, 0); }  // left arrow
+                    if (key = 132) { do board.moveCurrentShape(1, 0); }   // right arrow
+                    if (key = 133) { do board.dropOrLock(); let timer = 0; }  // down arrow = instant drop one row
+                    if (key = 128) { do board.hardDrop(); let timer = 0; }     // enter = hard drop
+                    if (key = 81)  { let quit = true; }                    // Q = quit
+                    let keyHandled = true;
+                }
+            } else {
+                let keyHandled = false;
+            }
+
+            if (gravity > 5000){
+                if (timer = 20000){
+                    let gravity = gravity - 1;
+                }
+                
+            }
+            // Gravity: auto-drop after enough ticks
+            let timer = timer + 1;
+            
+            if (timer > gravity) {
+                do board.dropOrLock();
+
+                let timer = 0;
+            }
+        }
+
+        return;
+    }
+
+    method void dispose() {
+        do board.dispose();
+        do Memory.deAlloc(this);
+        return;
+    }
+}

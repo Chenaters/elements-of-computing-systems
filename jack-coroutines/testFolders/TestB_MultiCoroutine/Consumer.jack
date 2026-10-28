@@ -1,0 +1,51 @@
+// Test B: Consumer Coroutine
+// Runs in parallel with Producer, receiving values
+
+coroutine class Consumer {
+  field int lastValue;
+  field int count;
+
+  constructor Consumer new() {
+    let lastValue = 0;
+    let count = 0;
+    return this;
+  }
+
+  task run(Producer prod) {
+   
+    let lastValue = prod.getValue();
+    let count = count + 1;
+    do Output.printString("  Consumer: Received ");
+    do Output.printInt(lastValue);
+    do Output.println();
+
+    yield;  // Pause for next producer value
+
+    // Segment 2: consume second value
+    let lastValue = prod.getValue();
+    let count = count + 1;
+    do Output.printString("  Consumer: Received ");
+    do Output.printInt(lastValue);
+    do Output.println();
+
+    yield;  // Pause for next producer value
+
+    // Segment 3: consume third value
+    let lastValue = prod.getValue();
+    let count = count + 1;
+    do Output.printString("  Consumer: Received ");
+    do Output.printInt(lastValue);
+    do Output.println();
+
+    finish;  // Done consuming
+  }
+
+  method int getCount() {
+    return count;
+  }
+
+  method void dispose() {
+    do Memory.deAlloc(this);
+    return;
+  }
+}

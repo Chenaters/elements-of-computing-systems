@@ -1,0 +1,50 @@
+// Test B: Multiple Coroutines with Alternating Execution
+// Demonstrates: two coroutines running in round-robin fashion
+// Producer coroutine: prints numbers
+// Consumer coroutine: receives and displays them
+
+coroutine class Producer {
+  field int value;
+  field boolean finished;
+
+  constructor Producer new() {
+    let value = 0;
+    let finished = false;
+    return this;
+  }
+
+  task run() {
+    // Segment 1: produce first value
+    let value = 10;
+    do Output.printString("Producer: Generated ");
+    do Output.printInt(value);
+    do Output.println();
+    
+    yield;  // Pause for consumer
+
+    // Segment 2: produce second value
+    let value = 20;
+    do Output.printString("Producer: Generated ");
+    do Output.printInt(value);
+    do Output.println();
+    
+    yield;  // Pause for consumer
+
+    // Segment 3: produce third value
+    let value = 30;
+    do Output.printString("Producer: Generated ");
+    do Output.printInt(value);
+    do Output.println();
+    
+    finish;  // Done producing
+  }
+
+  method int getValue() {
+    return value;
+  }
+
+  method void dispose() {
+    do Memory.deAlloc(this);
+    return;
+  }
+}

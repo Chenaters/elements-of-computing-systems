@@ -1,0 +1,43 @@
+// Test A: Simple Coroutine with Yields and Finish
+// Single coroutine that prints messages at different points
+// Demonstrates: yield (pause), finish (stop), and state management
+
+coroutine class SimpleCounter {
+  field int count;
+  field int maxCount;
+
+  constructor SimpleCounter new(int max) {
+    let count = 0;
+    let maxCount = max;
+    return this;
+  }
+
+  task step() {
+    // First segment: initialize and print
+    do Output.printString("Starting counter...");
+    do Output.println();
+    let count = 0;
+
+    yield;  // Pause here - first yield point
+
+    // Second segment: count up
+    do Output.printString("Counting: ");
+    do Output.printInt(count);
+    do Output.println();
+    let count = count + 1;
+
+    yield;  // Pause here - second yield point
+
+    // Third segment: finish
+    do Output.printString("Counter finished!");
+    do Output.println();
+    do Output.printInt(count);
+    do Output.println();
+    finish;  // Mark this coroutine as complete
+  }
+
+  method void dispose() {
+    do Memory.deAlloc(this);
+    return;
+  }
+}

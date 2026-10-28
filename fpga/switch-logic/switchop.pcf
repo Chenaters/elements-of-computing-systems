@@ -1,0 +1,10 @@
+# Constraints for SwitchOp project on Go-board
+# Map switches and LEDs used by SwitchOp
+set_io -nowarn SW1  53
+set_io -nowarn SW2  51
+set_io -nowarn SW3  54
+set_io -nowarn SW4 52
+set_io -nowarn LED1  56
+set_io -nowarn LED4  60
+# Optional system clock if needed
+set_io -nowarn CLK 15
